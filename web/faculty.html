@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Faculty &amp; Department Dashboard — Mini-Project Portfolio Monitoring Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    main {
+      padding: 0.6rem 1.5rem !important;
+      gap: 0.35rem !important;
+      max-width: 1400px;
+    }
+    .page-head {
+      margin-bottom: 0.25rem;
+    }
+    .page-head h1 {
+      font-size: 1.25rem !important;
+      margin: 0 0 0.15rem 0 !important;
+      line-height: 1.2 !important;
+    }
+    .page-head p {
+      font-size: 0.8rem !important;
+      margin: 0 0 0.25rem 0 !important;
+    }
+    .breadcrumbs {
+      font-size: 0.78rem !important;
+      margin-bottom: 0.1rem !important;
+    }
+    #faculty-section {
+      margin-bottom: 0.65rem !important;
+    }
+    #roster-title {
+      margin: 0 0 0.35rem 0 !important;
+      font-size: 1.05rem !important;
+      font-weight: 700 !important;
+      color: var(--ink) !important;
+    }
+    #grid.grid--cards {
+      gap: 0.85rem !important;
+    }
+    #grid .college-card, #grid .card {
+      padding: 0.75rem 1rem !important;
+      border-radius: var(--radius-sm) !important;
+    }
+    #grid .college-card h2 {
+      font-size: 1.08rem !important;
+      font-weight: 650 !important;
+      margin: 0 0 0.25rem 0 !important;
+      line-height: 1.25 !important;
+      color: var(--ink) !important;
+    }
+    #grid .college-card .campus {
+      font-size: 0.82rem !important;
+      color: var(--ink-soft) !important;
+    }
+    #hod-dashboard-container h2 {
+      font-size: 1.05rem !important;
+      font-weight: 700 !important;
+      margin: 0.2rem 0 0.35rem 0 !important;
+      color: var(--ink) !important;
+    }
+    .hod-two-col-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 0.5rem;
+    }
+    .hod-card-neat {
+      background: var(--surface);
+      border: 1.5px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 0.65rem 0.85rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .hod-card-h3 {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--brand);
+      margin: 0 0 0.4rem 0;
+    }
+    .hod-subgroup {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .hod-subgroup-label {
+      font-size: 0.68rem;
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--ink-soft);
+    }
+    .hod-btn-row {
+      display: flex;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .btn--sm {
+      font-size: 0.78rem !important;
+      padding: 0.28rem 0.55rem !important;
+      border-radius: 5px !important;
+      line-height: 1.2 !important;
+      min-height: unset !important;
+      white-space: nowrap;
+    }
+    .csv-drop-zone {
+      border: 1.5px dashed var(--line);
+      border-radius: var(--radius-sm);
+      background: var(--surface-alt);
+      padding: 0.45rem 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-bottom: 0.35rem;
+    }
+    .csv-drop-zone:hover, .csv-drop-zone.drag-over {
+      border-color: var(--brand);
+      background: var(--brand-soft);
+    }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 1rem; }
+    .modal-backdrop:not([hidden]) { display: flex !important; }
+    .modal-backdrop[hidden] { display: none !important; }
+    .modal-box { background: var(--surface); border-radius: var(--radius-md); max-width: 38rem; width: 100%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    .modal-box h2 { margin-top: 0; }
+    .modal-field { margin-bottom: 1rem; }
+    .modal-field label { display: block; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; }
+    .modal-field input, .modal-field select { width: 100%; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; }
+    .badge--valid { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; background: #e6f4ea; color: #137333; font-weight: 650; }
+    .badge--invalid { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; background: #fce8e6; color: #c5221f; font-weight: 650; }
+  </style>
+</head>
+<body>
+  <div class="app app--scroll">
+    <main>
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+      <div class="page-head">
+        <h1 id="page-title"></h1>
+        <p id="page-sub"></p>
+      </div>
+
+      <!-- 1. Faculty Cards Roster (Primary Focus - Placed ABOVE) -->
+      <section id="faculty-section">
+        <h2 id="roster-title">Faculty Members</h2>
+        <div class="grid grid--cards" id="grid"></div>
+      </section>
+
+      <!-- 2. Department Head Management Module (Placed BELOW Faculty Members) -->
+      <div id="hod-dashboard-container" hidden>
+        <h2>Department Data &amp; Team Management</h2>
+
+        <div class="hod-two-col-grid">
+          <!-- Card 1: Add & View Actions -->
+          <div class="hod-card-neat">
+            <h3 class="hod-card-h3">Department Actions</h3>
+
+            <div class="hod-subgroup">
+              <span class="hod-subgroup-label">Add</span>
+              <div class="hod-btn-row">
+                <button type="button" class="btn--primary btn--sm" id="btn-add-faculty">+ Faculty</button>
+                <button type="button" class="btn--primary btn--sm" id="btn-add-theme">+ Theme</button>
+                <button type="button" class="btn--primary btn--sm" id="btn-add-artifact">+ Artifact</button>
+                <button type="button" class="btn--primary btn--sm" id="btn-add-team">+ Team</button>
+              </div>
+            </div>
+
+            <div class="hod-subgroup" style="margin-top: 0.45rem;">
+              <span class="hod-subgroup-label">View</span>
+              <div class="hod-btn-row">
+                <button type="button" class="btn--sm" id="btn-view-students">👥 Students</button>
+                <button type="button" class="btn--sm" id="btn-view-themes">Themes</button>
+                <button type="button" class="btn--sm" id="btn-view-artifacts">Artifacts</button>
+                <button type="button" class="btn--sm" id="btn-view-teams">Teams</button>
+                <button type="button" class="btn--sm" id="btn-view-faculty" style="display:none;">Faculty</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2: CSV Upload with Download Option Above, Choose CSV & Drag/Drop, Validate -->
+          <div class="hod-card-neat">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem; flex-wrap: wrap; gap: 0.4rem;">
+              <h3 class="hod-card-h3" style="margin: 0;">CSV Team Upload</h3>
+              <!-- Download option created above -->
+              <button type="button" id="btn-download-csv-template" class="btn--sm btn--primary">
+                📥 Download Template
+              </button>
+            </div>
+
+            <!-- Drag & Drop Zone + Choose CSV -->
+            <div id="csv-drop-zone" class="csv-drop-zone">
+              <input type="file" id="csv-file-input" accept=".csv" style="display: none;" />
+              <p style="margin: 0; font-size: 0.8rem; color: var(--ink);">
+                📄 Drag &amp; drop CSV here, or
+                <button type="button" id="btn-choose-csv" class="btn--sm" style="margin-left: 0.25rem; display: inline-block;">Choose CSV</button>
+              </p>
+              <p id="selected-file-label" style="margin: 0.15rem 0 0; font-size: 0.74rem; color: var(--ink-soft);">No file selected</p>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end;">
+              <button type="button" id="btn-validate-csv" class="btn--primary btn--sm" disabled style="padding: 0.3rem 1rem;">
+                Validate CSV
+              </button>
+            </div>
+
+            <div id="csv-alerts"></div>
+          </div>
+        </div>
+
+        <div id="csv-preview-container" hidden></div>
+      </div>
+
+      <!-- Generic Modal Container for Manual Actions -->
+      <div id="modal-backdrop" class="modal-backdrop" hidden>
+        <div class="modal-box" id="modal-content"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const session = requireSession();
+    const dept = session && findDept(qs('did'));
+
+    if (!session) {
+      // requireSession redirected
+    } else if (!dept) {
+      document.body.innerHTML = '<p style="padding:2rem">No such department.</p>';
+    } else if (session.scope.level === 'faculty') {
+      window.location.replace(homeUrlFor(session.scope));
+    } else {
+      const school = findSchool(dept.sid);
+      const college = findCollege(school.cid);
+
+      if (!authorize(session.scope, { cid: college.cid, did: dept.did })) {
+        renderTopbar('Faculty', session);
+        denyAccess(session);
+      } else {
+        renderTopbar('Faculty & Department Dashboard', session);
+
+        const isHod = session.scope.level === 'dept' && session.scope.did === dept.did;
+
+        const trail = isBranchScoped(session.scope)
+          ? [{ label: dept.name }]
+          : [
+              { label: 'Programme portfolio', href: 'portfolio.html' },
+              { label: college.name, href: `school.html?cid=${college.cid}` },
+              { label: school.name, href: `dept.html?sid=${school.sid}` },
+              { label: dept.name },
+            ];
+        renderBreadcrumbs(document.getElementById('breadcrumbs'), trail);
+
+        if (isHod) {
+          document.getElementById('page-title').textContent = 'Department Head Dashboard';
+          document.getElementById('page-sub').textContent = `My Department: ${dept.name} · HOD: ${dept.hodName}`;
+          document.getElementById('hod-dashboard-container').hidden = false;
+        } else {
+          document.getElementById('page-title').textContent = dept.name;
+        }
+
+        // Render faculty cards
+        function renderFacultyRoster() {
+          const faculty = facultyOf(dept.did);
+          if (!isHod) {
+            document.getElementById('page-sub').textContent = faculty.length === 0
+              ? `0 faculty members · HOD: ${dept.hodName} (${dept.code}). Currently no project themes or faculty recorded for this department.`
+              : `${faculty.length} faculty member${faculty.length === 1 ? '' : 's'} · HOD: ${dept.hodName} (${dept.code}). Select one to see their project theme.`;
+          }
+
+          if (faculty.length === 0) {
+            document.getElementById('grid').innerHTML = '<p class="empty">Currently no project themes or faculty recorded for this department.</p>';
+          } else {
+            document.getElementById('grid').innerHTML = faculty.map((f) => {
+              const themes = themesOf(f.fid);
+              const themeTitle = themes.length === 0
+                ? 'No theme yet'
+                : themes.length === 1
+                  ? themes[0].name
+                  : `${themes.length} themes`;
+              return cardLink(`theme.html?fid=${f.fid}`, themeTitle, f.name);
+            }).join('');
+          }
+        }
+        renderFacultyRoster();
+
+        // Modal Helpers
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalContent = document.getElementById('modal-content');
+
+        function openModal() {
+          modalBackdrop.hidden = false;
+          modalBackdrop.style.display = 'flex';
+        }
+
+        function closeModal() {
+          modalBackdrop.hidden = true;
+          modalBackdrop.style.display = 'none';
+          modalContent.innerHTML = '';
+        }
+
+        modalBackdrop.addEventListener('click', (e) => {
+          if (e.target === modalBackdrop) closeModal();
+        });
+
+        // ------------------------------------------------------------ HoD Manual Controls
+        if (isHod) {
+          // Add Faculty
+          document.getElementById('btn-add-faculty').addEventListener('click', () => {
+            modalContent.innerHTML = `
+              <h2>Add Faculty Member</h2>
+              <p class="hint">Add a new faculty member under ${dept.name}.</p>
+              <form id="form-add-fac">
+                <div class="modal-field">
+                  <label for="new-fac-name">Faculty Name</label>
+                  <input id="new-fac-name" type="text" placeholder="e.g. Dr. Ramesh Kumar" required />
+                </div>
+                <div class="modal-foot">
+                  <button type="button" id="modal-cancel">Cancel</button>
+                  <button type="submit" class="btn--primary">Save Faculty</button>
+                </div>
+              </form>
+            `;
+            openModal();
+            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            document.getElementById('form-add-fac').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const name = document.getElementById('new-fac-name').value.trim();
+              if (name) {
+                addFaculty(dept.did, name);
+                renderFacultyRoster();
+                closeModal();
+              }
+            });
+          });
+
+          // Add Theme
+          document.getElementById('btn-add-theme').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            if (!facList.length) {
+              alert('Please add at least one faculty member first.');
+              return;
+            }
+            modalContent.innerHTML = `
+              <h2>Add Project Theme</h2>
+              <form id="form-add-thm">
+                <div class="modal-field">
+                  <label for="new-thm-fac">Faculty Mentor</label>
+                  <select id="new-thm-fac" required>
+                    ${facList.map(f => `<option value="${f.fid}">${f.name}</option>`).join('')}
+                  </select>
+                </div>
+                <div class="modal-field">
+                  <label for="new-thm-name">Theme Name</label>
+                  <input id="new-thm-name" type="text" placeholder="e.g. Distributed Ledger Systems" required />
+                </div>
+                <div class="modal-field">
+                  <label for="new-thm-ay">Academic Year</label>
+                  <input id="new-thm-ay" type="text" value="2026-27" required />
+                </div>
+                <div class="modal-foot">
+                  <button type="button" id="modal-cancel">Cancel</button>
+                  <button type="submit" class="btn--primary">Save Theme</button>
+                </div>
+              </form>
+            `;
+            openModal();
+            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            document.getElementById('form-add-thm').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const fid = Number(document.getElementById('new-thm-fac').value);
+              const name = document.getElementById('new-thm-name').value.trim();
+              const ay = document.getElementById('new-thm-ay').value.trim();
+              if (name && fid) {
+                addTheme(dept.did, fid, name, ay);
+                renderFacultyRoster();
+                closeModal();
+              }
+            });
+          });
+
+          // Add Artifact
+          document.getElementById('btn-add-artifact').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            const deptThemes = facList.flatMap(f => themesOf(f.fid));
+            if (!deptThemes.length) {
+              alert('Please create at least one project theme first.');
+              return;
+            }
+            modalContent.innerHTML = `
+              <h2>Add Artifact / Team</h2>
+              <form id="form-add-art">
+                <div class="modal-field">
+                  <label for="new-art-thm">Project Theme</label>
+                  <select id="new-art-thm" required>
+                    ${deptThemes.map(t => `<option value="${t.tid}">${t.name} (${findFaculty(t.fid).name})</option>`).join('')}
+                  </select>
+                </div>
+                <div class="modal-field">
+                  <label for="new-art-code">Artifact ID</label>
+                  <input id="new-art-code" type="text" placeholder="e.g. ART-101" required />
+                </div>
+                <div class="modal-field">
+                  <label for="new-art-name">Artifact Name</label>
+                  <input id="new-art-name" type="text" placeholder="e.g. Scalable Cache Server" required />
+                </div>
+                <div class="modal-field">
+                  <label for="new-art-teamno">Team No</label>
+                  <input id="new-art-teamno" type="text" placeholder="e.g. 1" required />
+                </div>
+                <div class="modal-foot">
+                  <button type="button" id="modal-cancel">Cancel</button>
+                  <button type="submit" class="btn--primary">Save Artifact</button>
+                </div>
+              </form>
+            `;
+            openModal();
+            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            document.getElementById('form-add-art').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const tid = Number(document.getElementById('new-art-thm').value);
+              const code = document.getElementById('new-art-code').value.trim();
+              const name = document.getElementById('new-art-name').value.trim();
+              const teamNo = document.getElementById('new-art-teamno').value.trim();
+              if (tid && name && code) {
+                addArtifact(tid, name, code, teamNo);
+                renderFacultyRoster();
+                closeModal();
+              }
+            });
+          });
+
+          // Add Team
+          document.getElementById('btn-add-team').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            const deptThemes = facList.flatMap(f => themesOf(f.fid));
+            const deptArtifacts = deptThemes.flatMap(t => artifactsOf(t.tid));
+            if (!deptArtifacts.length) {
+              alert('Please create at least one artifact first.');
+              return;
+            }
+            modalContent.innerHTML = `
+              <h2>Add Team to Artifact</h2>
+              <form id="form-add-team">
+                <div class="modal-field">
+                  <label for="team-art">Artifact</label>
+                  <select id="team-art" required>
+                    ${deptArtifacts.map(a => `<option value="${a.aid}">${a.name} (${a.code || 'ID: ' + a.aid})</option>`).join('')}
+                  </select>
+                </div>
+                <div class="modal-field">
+                  <label for="team-sname">Student Name</label>
+                  <input id="team-sname" type="text" placeholder="e.g. Rahul Sharma" required />
+                </div>
+                <div class="modal-field">
+                  <label for="team-usn">USN</label>
+                  <input id="team-usn" type="text" placeholder="e.g. 01FE24BCI099" />
+                </div>
+                <div class="modal-field">
+                  <label for="team-roll">Roll No</label>
+                  <input id="team-roll" type="text" placeholder="e.g. 250" />
+                </div>
+                <div class="modal-foot">
+                  <button type="button" id="modal-cancel">Cancel</button>
+                  <button type="submit" class="btn--primary">Add Student</button>
+                </div>
+              </form>
+            `;
+            openModal();
+            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            document.getElementById('form-add-team').addEventListener('submit', (e) => {
+              e.preventDefault();
+              const aid = Number(document.getElementById('team-art').value);
+              const sname = document.getElementById('team-sname').value.trim();
+              const usn = document.getElementById('team-usn').value.trim();
+              const roll = document.getElementById('team-roll').value.trim();
+              if (aid && sname) {
+                addStudent(aid, dept.did, sname, usn, roll, 'B', 5, dept.name);
+                alert(`Student "${sname}" added successfully.`);
+                closeModal();
+              }
+            });
+          });
+
+          // View Faculty
+          document.getElementById('btn-view-faculty').addEventListener('click', () => {
+            document.getElementById('faculty-section').scrollIntoView({ behavior: 'smooth' });
+          });
+
+          // View Themes
+          document.getElementById('btn-view-themes').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            const deptThemes = facList.flatMap(f => themesOf(f.fid).map(t => ({ ...t, facultyName: f.name })));
+            modalContent.innerHTML = `
+              <h2>Department Project Themes</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Theme ID</th><th>Theme Name</th><th>Faculty Mentor</th><th>AY</th></tr></thead>
+                  <tbody>
+                    ${deptThemes.map(t => `
+                      <tr>
+                        <td class="src">T-${t.tid}</td>
+                        <td><strong>${t.name}</strong></td>
+                        <td>${t.facultyName}</td>
+                        <td>${t.academicYear}</td>
+                      </tr>
+                    `).join('') || '<tr><td colspan="4" class="empty">No themes recorded yet.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-foot"><button type="button" id="modal-close-btn" class="btn--primary">Close</button></div>
+            `;
+            openModal();
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+          });
+
+          // View Artifacts
+          document.getElementById('btn-view-artifacts').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            const deptThemes = facList.flatMap(f => themesOf(f.fid));
+            const deptArtifacts = deptThemes.flatMap(t => artifactsOf(t.tid).map(a => ({ ...a, themeName: t.name, facultyName: findFaculty(t.fid).name })));
+            modalContent.innerHTML = `
+              <h2>Department Artifacts &amp; Teams</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Artifact ID</th><th>Artifact Name</th><th>Theme</th><th>Faculty</th><th>Team</th></tr></thead>
+                  <tbody>
+                    ${deptArtifacts.map(a => `
+                      <tr>
+                        <td class="src">${a.code || 'ART-' + a.aid}</td>
+                        <td><strong>${a.name}</strong></td>
+                        <td>${a.themeName}</td>
+                        <td>${a.facultyName}</td>
+                        <td>Team of ${studentsOf(a.aid).length}</td>
+                      </tr>
+                    `).join('') || '<tr><td colspan="5" class="empty">No artifacts recorded yet.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-foot"><button type="button" id="modal-close-btn" class="btn--primary">Close</button></div>
+            `;
+            openModal();
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+          });
+
+          // View Teams
+          document.getElementById('btn-view-teams').addEventListener('click', () => {
+            const facList = facultyOf(dept.did);
+            const deptThemes = facList.flatMap(f => themesOf(f.fid));
+            const deptArtifacts = deptThemes.flatMap(t => artifactsOf(t.tid).map(a => ({ ...a, themeName: t.name })));
+            modalContent.innerHTML = `
+              <h2>Department Teams Overview</h2>
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead><tr><th>Team / Artifact</th><th>Theme</th><th>Students Count</th><th>Status</th><th>Link</th></tr></thead>
+                  <tbody>
+                    ${deptArtifacts.map(a => {
+                      const st = getArtifactStatus(a.aid);
+                      const studs = studentsOf(a.aid);
+                      return `
+                        <tr>
+                          <td><strong>${a.name}</strong> (${a.code || 'ID: ' + a.aid})</td>
+                          <td>${a.themeName}</td>
+                          <td>${studs.length} student${studs.length === 1 ? '' : 's'}</td>
+                          <td><span class="rag-dot rag-dot--tiny rag-dot--${st.status}"></span> ${st.status.toUpperCase()} (${st.progress}%)</td>
+                          <td><a href="student.html?aid=${a.aid}">Open Students</a></td>
+                        </tr>
+                      `;
+                    }).join('') || '<tr><td colspan="5" class="empty">No teams found.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-foot"><button type="button" id="modal-close-btn" class="btn--primary">Close</button></div>
+            `;
+            openModal();
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+          });
+
+          // View / Edit Students
+          document.getElementById('btn-view-students').addEventListener('click', () => {
+            const deptStudents = DATA.students.filter(s => s.did === dept.did).map(s => getStudentDetails(s.sid));
+            modalContent.innerHTML = `
+              <h2>Department Students Directory (${deptStudents.length})</h2>
+              <div class="table-wrap" style="max-height: 60vh; overflow-y: auto;">
+                <table class="data-table">
+                  <thead><tr><th>Name</th><th>USN / SRN</th><th>Roll No</th><th>Div</th><th>Sem</th><th>Artifact</th></tr></thead>
+                  <tbody>
+                    ${deptStudents.map(s => {
+                      const art = findArtifact(s.aid);
+                      return `
+                        <tr>
+                          <td><strong>${s.name}</strong></td>
+                          <td>${s.srn || '—'}</td>
+                          <td>${s.rollNo || '—'}</td>
+                          <td>${s.division || '—'}</td>
+                          <td>${s.semester}</td>
+                          <td>${art ? art.name : '—'}</td>
+                        </tr>
+                      `;
+                    }).join('') || '<tr><td colspan="6" class="empty">No students found.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+              <div class="modal-foot"><button type="button" id="modal-close-btn" class="btn--primary">Close</button></div>
+            `;
+            openModal();
+            document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+          });
+
+          // ------------------------------------------------------------ CSV Import Flow
+          const downloadBtn = document.getElementById('btn-download-csv-template');
+          const chooseFileBtn = document.getElementById('btn-choose-csv');
+          const fileInput = document.getElementById('csv-file-input');
+          const fileLabel = document.getElementById('selected-file-label');
+          const validateBtn = document.getElementById('btn-validate-csv');
+          const alertsBox = document.getElementById('csv-alerts');
+          const previewBox = document.getElementById('csv-preview-container');
+
+          downloadBtn.addEventListener('click', downloadCsvTemplate);
+
+          chooseFileBtn.addEventListener('click', () => {
+            fileInput.click();
+          });
+
+          let currentCsvContent = '';
+
+          function handleFile(file) {
+            alertsBox.innerHTML = '';
+            previewBox.hidden = true;
+            previewBox.innerHTML = '';
+            validateBtn.disabled = true;
+
+            if (!file) {
+              fileLabel.textContent = 'No file selected';
+              return;
+            }
+
+            fileLabel.textContent = `Selected file: ${file.name}`;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              currentCsvContent = event.target.result;
+              validateBtn.disabled = false;
+            };
+            reader.readAsText(file);
+          }
+
+          fileInput.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+          });
+
+          const dropZone = document.getElementById('csv-drop-zone');
+          if (dropZone) {
+            dropZone.addEventListener('click', (e) => {
+              if (e.target !== chooseFileBtn && e.target !== fileInput) {
+                fileInput.click();
+              }
+            });
+            dropZone.addEventListener('dragover', (e) => {
+              e.preventDefault();
+              dropZone.classList.add('drag-over');
+            });
+            dropZone.addEventListener('dragleave', (e) => {
+              e.preventDefault();
+              dropZone.classList.remove('drag-over');
+            });
+            dropZone.addEventListener('drop', (e) => {
+              e.preventDefault();
+              dropZone.classList.remove('drag-over');
+              const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+              if (file) {
+                handleFile(file);
+              }
+            });
+          }
+
+          let validatedResult = null;
+
+          validateBtn.addEventListener('click', () => {
+            alertsBox.innerHTML = '';
+            previewBox.hidden = true;
+            previewBox.innerHTML = '';
+
+            const res = validateCsvContent(currentCsvContent, dept.did);
+            validatedResult = res;
+
+            if (!res.valid) {
+              alertsBox.innerHTML = `
+                <div class="alert alert--error" style="margin-top: 1rem;">
+                  <strong>CSV Validation Failed</strong>
+                  <p>Please fix the following issues in your CSV and try again:</p>
+                  <ul style="margin: 0; padding-left: 1.25rem;">
+                    ${res.errors.map(err => `<li><strong>Row ${err.row}:</strong> ${err.field} — ${err.reason}</li>`).join('')}
+                  </ul>
+                  <button type="button" id="btn-choose-another" style="margin-top: 0.75rem;">Choose Another CSV</button>
+                </div>
+              `;
+              document.getElementById('btn-choose-another').addEventListener('click', () => {
+                fileInput.value = '';
+                fileInput.click();
+              });
+              return;
+            }
+
+            // Valid - show preview table with merged cells matching user spreadsheet
+            previewBox.hidden = false;
+            previewBox.innerHTML = `
+              <div style="margin-top: 1.5rem; border-top: 1px solid var(--line); padding-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                  <div>
+                    <h3 style="margin: 0; font-size: 1.1rem;">CSV Preview &amp; Validation Result</h3>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.85rem; color: var(--ink-soft);">
+                      Teams detected: <strong>${res.teams.length}</strong> · Students detected: <strong>${res.totalStudents}</strong> · Status: <span class="badge--valid">VALID</span>
+                    </p>
+                  </div>
+                  <button type="button" id="btn-import-data" class="btn--primary" style="padding: 0.6rem 1.25rem;">
+                    🚀 Import Data
+                  </button>
+                </div>
+
+                <div class="table-wrap" style="max-height: 65vh; overflow-y: auto; border: 1.5px solid var(--line); border-radius: var(--radius-md);">
+                  <table class="data-table" style="border-collapse: collapse; width: 100%;">
+                    <thead style="background: var(--surface-alt); position: sticky; top: 0; z-index: 2;">
+                      <tr>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Team No.</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Student Name</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">USN</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Roll No</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Guide Name</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Theme</th>
+                        <th style="border: 1px solid var(--line); padding: 0.6rem;">Artifact Title</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${res.teams.map((t) => {
+                        const span = t.students.length;
+                        return t.students.map((s, sIdx) => `
+                          <tr style="border-bottom: ${sIdx === span - 1 ? '2.5px solid var(--brand)' : '1px solid var(--line-soft)'}; background: ${sIdx % 2 === 0 ? 'var(--surface)' : 'var(--surface-alt)'};">
+                            ${sIdx === 0 ? `
+                              <td rowspan="${span}" style="border: 1px solid var(--line); vertical-align: middle; text-align: center; font-weight: 700; font-size: 1.05rem; background: var(--surface);">
+                                Team ${t.teamNo}
+                              </td>
+                            ` : ''}
+                            <td style="border: 1px solid var(--line); padding: 0.5rem 0.75rem;"><strong>${s.studentName}</strong></td>
+                            <td style="border: 1px solid var(--line); padding: 0.5rem 0.75rem; font-family: monospace; font-size: 0.85rem;">${s.usn || '—'}</td>
+                            <td style="border: 1px solid var(--line); padding: 0.5rem 0.75rem;">${s.rollNo || '—'}</td>
+                            ${sIdx === 0 ? `
+                              <td rowspan="${span}" style="border: 1px solid var(--line); vertical-align: middle; padding: 0.75rem; background: var(--surface);">
+                                <strong>${t.faculty}</strong>
+                              </td>
+                              <td rowspan="${span}" style="border: 1px solid var(--line); vertical-align: middle; padding: 0.75rem; background: var(--surface);">
+                                ${t.theme}
+                              </td>
+                              <td rowspan="${span}" style="border: 1px solid var(--line); vertical-align: middle; padding: 0.75rem; background: var(--surface);">
+                                <strong>${t.artifactName}</strong>
+                                <div style="font-size: 0.75rem; color: var(--ink-soft); font-family: monospace; margin-top: 0.25rem;">${t.artifactId}</div>
+                              </td>
+                            ` : ''}
+                          </tr>
+                        `).join('');
+                      }).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+
+            document.getElementById('btn-import-data').addEventListener('click', () => {
+              const importRes = importValidatedTeams(res.teams, dept.did);
+              previewBox.hidden = true;
+              alertsBox.innerHTML = `
+                <div class="alert alert--success" style="margin-top: 1rem;">
+                  <strong>CSV Import Successful!</strong>
+                  <p>Teams imported: <strong>${importRes.teamsImported}</strong> · Students imported: <strong>${importRes.studentsImported}</strong></p>
+                  <button type="button" id="btn-view-imported" class="btn--primary" style="margin-top: 0.5rem;">
+                    🔍 View Imported Data
+                  </button>
+                </div>
+              `;
+              renderFacultyRoster();
+              document.getElementById('btn-view-imported').addEventListener('click', () => {
+                document.getElementById('faculty-section').scrollIntoView({ behavior: 'smooth' });
+              });
+            });
+          });
+        }
+      }
+    }
+  </script>
+</body>
+</html>

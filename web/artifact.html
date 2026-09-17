@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Artefacts — Mini-Project Portfolio Monitoring Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <main>
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+      <div class="page-head">
+        <h1 id="page-title"></h1>
+        <p id="page-sub"></p>
+      </div>
+
+      <div class="grid grid--cards" id="grid"></div>
+
+      <section class="card status-panel" id="edit-status-card" hidden>
+        <h2>Update project status</h2>
+        <div id="edit-status-forms"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const session = requireSession();
+    const theme = session && findTheme(qs('tid'));
+    if (!session) {
+      // requireSession already redirected to the login page.
+    } else if (!theme) {
+      document.body.innerHTML = '<p style="padding:2rem">No such theme.</p>';
+    } else {
+      const fac = findFaculty(theme.fid);
+      const dept = findDept(theme.did);
+      const school = findSchool(dept.sid);
+      const college = findCollege(school.cid);
+      if (!authorize(session.scope, { cid: college.cid, did: dept.did, fid: fac.fid })) {
+        renderTopbar('Artefacts', session);
+        denyAccess(session);
+      } else {
+        renderTopbar('Artefacts', session);
+        let trail;
+        if (session.scope.level === 'faculty') {
+          trail = [
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name },
+          ];
+        } else if (session.scope.level === 'dept') {
+          trail = [
+            { label: dept.name, href: `faculty.html?did=${dept.did}` },
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name },
+          ];
+        } else {
+          trail = [
+            { label: 'Programme portfolio', href: 'portfolio.html' },
+            { label: college.name, href: `school.html?cid=${college.cid}` },
+            { label: school.name, href: `dept.html?sid=${school.sid}` },
+            { label: dept.name, href: `faculty.html?did=${dept.did}` },
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name },
+          ];
+        }
+        renderBreadcrumbs(document.getElementById('breadcrumbs'), trail);
+
+        document.getElementById('page-title').textContent = theme.name;
+        const artifacts = artifactsOf(theme.tid);
+        document.getElementById('page-sub').textContent =
+          `${artifacts.length} artefact${artifacts.length === 1 ? '' : 's'}. Select one to see its team.`;
+
+        function capitalize(word) { return word.charAt(0).toUpperCase() + word.slice(1); }
+
+        function renderGrid() {
+          document.getElementById('grid').innerHTML = artifacts.map((a) => {
+            const st = getArtifactStatus(a.aid);
+            const teamCount = studentsOf(a.aid).length;
+            return `
+              <a class="card college-card link-card" href="student.html?aid=${a.aid}">
+                <h2>${a.name}</h2>
+                <div class="campus">Team of ${teamCount}</div>
+                <div class="status-line">
+                  <span class="rag-dot rag-dot--tiny rag-dot--${st.status}" aria-hidden="true"></span>
+                  <span>${capitalize(st.status)} · ${st.progress}%</span>
+                </div>
+                <div class="progress-bar"><div class="progress-bar__fill progress-bar__fill--${st.status}" style="width:${st.progress}%"></div></div>
+              </a>
+            `;
+          }).join('') || '<p class="empty">No artefact recorded yet for this theme.</p>';
+        }
+        renderGrid();
+
+        // Only the faculty mentor who owns this theme may edit its artifacts'
+        // status/progress - every other role only ever sees renderGrid() above.
+        if (artifacts.length && canEditArtifactStatus(session, artifacts[0])) {
+          const editCard = document.getElementById('edit-status-card');
+          editCard.hidden = false;
+          document.getElementById('edit-status-forms').innerHTML = artifacts.map((a) => {
+            const st = getArtifactStatus(a.aid);
+            return `
+              <form class="status-form" data-aid="${a.aid}">
+                <span class="status-form__name">${a.name}</span>
+                <label>Status
+                  <select name="status">
+                    <option value="red" ${st.status === 'red' ? 'selected' : ''}>Red</option>
+                    <option value="yellow" ${st.status === 'yellow' ? 'selected' : ''}>Yellow</option>
+                    <option value="green" ${st.status === 'green' ? 'selected' : ''}>Green</option>
+                  </select>
+                </label>
+                <label>Progress %
+                  <input type="number" name="progress" min="0" max="100" step="1" value="${st.progress}" />
+                </label>
+                <button type="submit" class="btn--primary">Save</button>
+                <span class="status-form__saved" hidden>Saved</span>
+              </form>
+            `;
+          }).join('');
+
+          document.querySelectorAll('.status-form').forEach((form) => {
+            form.addEventListener('submit', (event) => {
+              event.preventDefault();
+              const aid = Number(form.dataset.aid);
+              const status = form.elements.status.value;
+              const progress = form.elements.progress.value;
+              if (setArtifactStatus(session, aid, status, progress)) {
+                renderGrid();
+                const saved = form.querySelector('.status-form__saved');
+                saved.hidden = false;
+                setTimeout(() => { saved.hidden = true; }, 1500);
+              }
+            });
+          });
+        }
+      }
+    }
+  </script>
+</body>
+</html>

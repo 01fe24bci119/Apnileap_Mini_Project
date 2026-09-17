@@ -1,0 +1,126 @@
+-- ============================================================
+-- College — seed data
+-- Names fetched from the existing ApniLeap Mini Project v2
+-- database (server/data/portal.db, table institutes).
+--
+-- KLE Technological University is the one institute split into
+-- two campus rows, per instruction. The other four institutes
+-- carry straight over as one College row each, using their
+-- existing name and city.
+-- ============================================================
+
+INSERT INTO College (College_name, Campus) VALUES
+  ('KLETech Hubballi Campus', 'Hubballi'),
+  ('KLETech Belagavi Campus', 'Belagavi'),
+  ('Marathwada Mitra Mandal College of Engineering', 'Pune'),
+  ('Rajarambapu Institute of Technology', 'Islampur'),
+  ('College of Engineering Pune (COEB/COEP - name to be confirmed)', 'Pune'),
+  ('Sangli Institute (official name to be confirmed)', 'Sangli');
+
+-- ============================================================
+-- School → Dept → Faculty → Theme → Artifact → Student
+-- 5 rows per table, ALL scoped under Cid = 1 (KLETech Hubballi
+-- Campus) only — no other college has any of this data yet.
+--
+-- Kept as 5 parallel, fully-traceable chains (one school, one
+-- dept, one faculty, one theme, one artifact, one student per
+-- lane) rather than a fan-out, so every row can be followed end
+-- to end without ambiguity.
+-- ============================================================
+
+-- Each school is headed by its own Dean (School_code/Dean_name/Dean_contact
+-- are school-level fields — a Dean oversees the whole school, not one dept).
+INSERT INTO School (Sname, School_code, Dean_name, Dean_contact, Cid) VALUES
+  ('School of Computer Science & Engineering', 'SCH-CSE', 'Dr. Girish Hegde', 'dean.cse@kletech.example', 1),
+  ('School of Electronics & Communication Engineering', 'SCH-ECE', 'Dr. Vidya Rao', 'dean.ece@kletech.example', 1),
+  ('School of Mechanical Engineering', 'SCH-ME', 'Dr. Suresh Nayak', 'dean.me@kletech.example', 1),
+  ('School of Civil Engineering', 'SCH-CE', 'Dr. Anita Kulkarni', 'dean.ce@kletech.example', 1),
+  ('School of Computer Applications', 'SCH-CA', 'Dr. Prakash Shetty', 'dean.ca@kletech.example', 1);
+
+-- Each department is headed by its own HOD - a distinct role from the
+-- school's Dean. A school can hold multiple departments (the seed data
+-- keeps one per school for now, tracing 5 parallel chains end to end, but
+-- the schema places no limit on it).
+INSERT INTO Dept (Dname, Dept_code, HOD_name, HOD_contact, Sid) VALUES
+  ('B E Computer Science and Engineering', 'CSE', 'Dr. Vijaylaxmi M', 'hod.cse@kletech.example', 1),
+  ('Electronics and Communication Engineering', 'ECE', 'Dr. Sunita Naik', 'hod.ece@kletech.example', 2),
+  ('Mechanical Engineering', 'ME', 'Dr. Ravindra Patil', 'hod.me@kletech.example', 3),
+  ('Civil Engineering', 'CE', 'Dr. Manjula Desai', 'hod.ce@kletech.example', 4),
+  ('Computer Applications', 'CA', 'Dr. Ajay Bhandari', 'hod.ca@kletech.example', 5),
+  ('B E Computer Science and Engineering (Artificial Intelligence)', 'CSE-AI', 'Dr. Narayan D G', 'narayan.dg@kletech.example', 1),
+  ('Bachelor of Computer Applications (BCA)', 'BCA', 'Dr. Deepa Mulimani', 'deepa.mulimani@kletech.example', 1),
+  ('Master of Computer Application', 'MCA', 'Dr. P R Patil', 'pr.patil@kletech.example', 1);
+
+INSERT INTO Faculty (Fname, Did) VALUES
+  ('Prof. Sanjay Hegde', 1),
+  ('Prof. Meera Nayak', 2),
+  ('Prof. Suresh Patil', 3),
+  ('Prof. Anita Deshpande', 4),
+  ('Prof. Kiran Joshi', 5),
+  ('Mr. Amit Kachavimath', 6),
+  ('Ms. Pooja Shettar', 6),
+  ('Mr. Pranav Kumar Saunshi', 6);
+
+INSERT INTO Theme (Tname, Academic_year, D_id, F_id) VALUES
+  ('Role-Based Workflow Management System', '2026-27', 1, 1),
+  ('Multi-Process Search Engine with Persistent Index', '2026-27', 2, 2),
+  ('Constraint-Based Timetable Scheduling System', '2026-27', 3, 3),
+  ('Transaction-Based Inventory Management System', '2026-27', 4, 4),
+  ('Peer-to-Peer File Sharing System', '2026-27', 5, 5),
+  ('Network Systems and Tools', '2026-27', 6, 6),
+  ('Resilient Multi Peer File Distribution and Recovery Engine', '2026-27', 6, 7),
+  ('NETWORK SYSTEM AND TOOLS', '2026-27', 6, 8);
+
+INSERT INTO Artifact (A_name, T_id) VALUES
+  ('Campus Lab Access Control Portal', 1),
+  ('Digital Library Search Engine', 2),
+  ('Automated Exam Timetable Generator', 3),
+  ('Hostel Inventory Management System', 4),
+  ('Peer Notes Sharing Network', 5),
+  ('Adaptive Video Streaming and Buffer Management Engine', 6),
+  ('Resilient Multi Peer File Distribution and Recovery Engine', 7),
+  ('DNS RESOLVER AND CACHING SERVER', 8);
+
+-- Every team (the students on one artifact) is fixed at exactly 4 members,
+-- never more or fewer — see the enforce_team_size trigger in schema.sql.
+-- Each team shares one Division, as project teams are usually drawn from
+-- the same class section; Semester is fixed at 5 for every student.
+INSERT INTO Student (S_name, SRN, Roll_no, Division, Semester, A_id, D_id) VALUES
+  ('Rohan Kulkarni',  '01FE22BCS001', '01', 'A', 5, 1, 1),
+  ('Ananya Rao',      '01FE22BCS002', '02', 'A', 5, 1, 1),
+  ('Vikram Iyer',     '01FE22BCS003', '03', 'A', 5, 1, 1),
+  ('Meghana Bhat',    '01FE22BCS004', '04', 'A', 5, 1, 1),
+
+  ('Sneha Patil',     '01FE22BEC001', '01', 'B', 5, 2, 2),
+  ('Arjun Nair',      '01FE22BEC002', '02', 'B', 5, 2, 2),
+  ('Divya Kulkarni',  '01FE22BEC003', '03', 'B', 5, 2, 2),
+  ('Rahul Kambli',    '01FE22BEC004', '04', 'B', 5, 2, 2),
+
+  ('Aditya Desai',    '01FE22BME001', '01', 'A', 5, 3, 3),
+  ('Pooja Shinde',    '01FE22BME002', '02', 'A', 5, 3, 3),
+  ('Nikhil Jadhav',   '01FE22BME003', '03', 'A', 5, 3, 3),
+  ('Swati More',      '01FE22BME004', '04', 'A', 5, 3, 3),
+
+  ('Priya Joshi',     '01FE22BCV001', '01', 'B', 5, 4, 4),
+  ('Om Deshmukh',     '01FE22BCV002', '02', 'B', 5, 4, 4),
+  ('Kavya Pawar',     '01FE22BCV003', '03', 'B', 5, 4, 4),
+  ('Siddharth Kale',  '01FE22BCV004', '04', 'B', 5, 4, 4),
+
+  ('Karan Shetty',    '01FE22BCA001', '01', 'A', 5, 5, 5),
+  ('Ishita Naik',     '01FE22BCA002', '02', 'A', 5, 5, 5),
+  ('Varun Hegde',     '01FE22BCA003', '03', 'A', 5, 5, 5),
+  ('Riya Kamath',     '01FE22BCA004', '04', 'A', 5, 5, 5),
+
+  ('Renuka Kagadal',  '01FE24BCI09',  '243', 'B', 5, 6, 6),
+  ('Divya Kumari',    '01FE24BCI094', '222', 'B', 5, 6, 6),
+  ('B. Bhagyashree',  '01FE24BCI104', '231', 'B', 5, 6, 6),
+  ('Akshay Bhat',     '01FE24BCI093', '210', 'B', 5, 6, 6),
+
+  ('Manasa',          '01FE24BCI-P1', '',    'B', 5, 7, 6),
+  ('Vineet',          '01FE24BCI-P2', '',    'B', 5, 7, 6),
+  ('Mahadev',         '01FE24BCI-P3', '',    'B', 5, 7, 6),
+  ('Arihant',         '01FE24BCI-P4', '',    'B', 5, 7, 6),
+
+  ('VAGEESH MATHAD',  '01FE24BCI008', '216', 'B', 5, 8, 6),
+  ('MEHAK SAYED YUSUF', '01FE24BCI012', '202', 'B', 5, 8, 6),
+  ('JOEL BIJU',       '01FE24BCI014', '208', 'B', 5, 8, 6);

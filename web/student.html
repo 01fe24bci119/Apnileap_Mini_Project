@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student — Mini-Project Portfolio Monitoring Portal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <main>
+      <nav class="breadcrumbs" id="breadcrumbs" aria-label="Breadcrumb"></nav>
+      <div class="page-head">
+        <h1 id="page-title"></h1>
+        <p id="page-sub"></p>
+      </div>
+
+      <div class="grid grid--cards" id="grid"></div>
+    </main>
+  </div>
+
+  <script src="data.js"></script>
+  <script>
+    const session = requireSession();
+    const artifact = session && findArtifact(qs('aid'));
+    if (!session) {
+      // requireSession already redirected to the login page.
+    } else if (!artifact) {
+      document.body.innerHTML = '<p style="padding:2rem">No such artefact.</p>';
+    } else {
+      const theme = findTheme(artifact.tid);
+      const fac = findFaculty(theme.fid);
+      const dept = findDept(theme.did);
+      const school = findSchool(dept.sid);
+      const college = findCollege(school.cid);
+      if (!authorize(session.scope, { cid: college.cid, did: dept.did, fid: fac.fid })) {
+        renderTopbar('Student', session);
+        denyAccess(session);
+      } else {
+        renderTopbar('Student', session);
+        let trail;
+        if (session.scope.level === 'faculty') {
+          trail = [
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name, href: `artifact.html?tid=${theme.tid}` },
+            { label: artifact.name },
+          ];
+        } else if (session.scope.level === 'dept') {
+          trail = [
+            { label: dept.name, href: `faculty.html?did=${dept.did}` },
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name, href: `artifact.html?tid=${theme.tid}` },
+            { label: artifact.name },
+          ];
+        } else {
+          trail = [
+            { label: 'Programme portfolio', href: 'portfolio.html' },
+            { label: college.name, href: `school.html?cid=${college.cid}` },
+            { label: school.name, href: `dept.html?sid=${school.sid}` },
+            { label: dept.name, href: `faculty.html?did=${dept.did}` },
+            { label: fac.name, href: `theme.html?fid=${fac.fid}` },
+            { label: theme.name, href: `artifact.html?tid=${theme.tid}` },
+            { label: artifact.name },
+          ];
+        }
+        renderBreadcrumbs(document.getElementById('breadcrumbs'), trail);
+
+        document.getElementById('page-title').textContent = artifact.name;
+
+        // Only the faculty mentor who owns this team may edit its students'
+        // details - checked once since every student on this page shares
+        // the same team (same theme), so it's the same answer for all of them.
+        const canEdit = studentsOf(artifact.aid).length > 0 && canEditStudent(session, studentsOf(artifact.aid)[0]);
+
+        function renderGrid() {
+          const students = studentsOf(artifact.aid);
+          // Team size is a fixed rule (see TEAM_SIZE in data.js), not just
+          // whatever the sample data happens to have - surface it honestly
+          // if it's ever off, rather than silently showing a short team.
+          document.getElementById('page-sub').textContent =
+            `Team of ${students.length} student${students.length === 1 ? '' : 's'} working on this artefact — end of the trail.`;
+
+          // Leaf level: a plain read-only card, since there is nothing below
+          // a student - except for the team's own mentor, who gets an
+          // inline-editable card instead (one card, not a card plus a
+          // separate edit form, to keep this page short enough to fit
+          // without scrolling).
+          document.getElementById('grid').innerHTML = students.map((s) => canEdit ? `
+            <form class="card college-card" data-sid="${s.sid}">
+              <input type="text" name="name" value="${s.name}" class="student-name-input" aria-label="Name" />
+              <div class="student-edit-row">
+                <input type="text" name="srn" value="${s.srn || ''}" aria-label="SRN" />
+                <input type="text" name="rollNo" value="${s.rollNo || ''}" aria-label="Roll No" style="width:2.8rem" />
+                <input type="text" name="division" value="${s.division || ''}" aria-label="Division" style="width:2.4rem" />
+                <span class="fixed-field" title="Semester is fixed for every student">Sem ${s.semester}</span>
+              </div>
+              <div class="student-edit-row">
+                <button type="submit" class="btn--primary">Save</button>
+                <span class="status-form__saved" hidden>Saved</span>
+              </div>
+            </form>
+          ` : `
+            <section class="card college-card">
+              <h2>${s.name}</h2>
+              ${s.srn ? `<div class="campus">${s.srn}${s.rollNo ? ` · Roll No ${s.rollNo}` : ''}</div>` : ''}
+              <div class="campus">${s.division ? `Div ${s.division} · ` : ''}Sem ${s.semester} · ${s.programme || findDept(s.did).name}</div>
+            </section>
+          `).join('') || '<p class="empty">No student recorded yet for this artefact.</p>';
+
+          if (canEdit) {
+            document.querySelectorAll('#grid form').forEach((form) => {
+              form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const sid = Number(form.dataset.sid);
+                const fields = {
+                  name: form.elements.name.value,
+                  srn: form.elements.srn.value,
+                  rollNo: form.elements.rollNo.value,
+                  division: form.elements.division.value,
+                  // semester is deliberately not sent - it's fixed at
+                  // FIXED_SEMESTER for everyone and isn't editable here.
+                };
+                if (setStudentDetails(session, sid, fields)) {
+                  const saved = form.querySelector('.status-form__saved');
+                  saved.hidden = false;
+                  setTimeout(() => { saved.hidden = true; }, 1500);
+                }
+              });
+            });
+          }
+        }
+        renderGrid();
+      }
+    }
+  </script>
+</body>
+</html>
