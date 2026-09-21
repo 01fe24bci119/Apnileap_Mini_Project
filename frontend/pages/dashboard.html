@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programme Dashboard | ApniLeap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="../css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="al-navbar navbar navbar-expand-xl">
+  <a class="al-brand" href="dashboard.html">APNI<span>LEAP</span></a>
+  <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain" aria-controls="navMain" aria-expanded="false" aria-label="Toggle navigation">
+    <span class="navbar-toggler-icon"></span>
+  </button>
+  <div class="collapse navbar-collapse" id="navMain">
+    <div class="d-flex flex-column flex-xl-row">
+      <a class="nav-link active" href="dashboard.html">Dashboard</a>
+      <a class="nav-link" href="reports.html">Reports</a>
+      <a class="nav-link d-none" id="navAdmin" href="administration.html">Administration</a>
+    </div>
+    <div class="d-flex align-items-center gap-2 ms-xl-auto mt-2 mt-xl-0">
+      <span class="al-user-chip" id="userChip">&nbsp;</span>
+      <button class="btn btn-sm btn-outline-light" id="logoutBtn">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="al-page">
+  <div class="al-page-header">
+    <div>
+      <h1 class="al-page-title" id="pageTitle">ApniLeap Mini-Project Portfolio</h1>
+      <p class="al-page-subtitle" id="pageSubtitle">Loading current portfolio status…</p>
+    </div>
+  </div>
+
+
+  <!-- Dean View: Department Choice Boxes (Primary default view for Dean) -->
+  <div id="deanView" class="d-none mb-4">
+    <div class="al-card mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2 class="mb-1 fs-5 fw-bold">Select Department</h2>
+          <p class="text-muted mb-0" style="font-size:13.5px">Select a department under your oversight to explore its project themes and mini-projects.</p>
+        </div>
+      </div>
+      <div class="row g-3" id="deanDepartmentGrid">
+        <div class="col-12 text-muted">Loading departments…</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- HOD View: Themes under his department (Primary default view for HOD) -->
+  <div id="hodView" class="d-none mb-4">
+    <div class="al-card mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h2 class="mb-1 fs-5 fw-bold" id="hodDeptTitle">Department Themes</h2>
+          <p class="text-muted mb-0" style="font-size:13.5px" id="hodDeptSubtitle">Select a theme to view its mini-projects.</p>
+        </div>
+      </div>
+      <div class="row g-3" id="hodThemeGrid">
+        <div class="col-12 text-muted">Loading themes…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Direct Projects View (for Faculty Mentors, Deans, HODs, and Admins) -->
+  <div id="projectsView">
+    <!-- Filter and Search Bar -->
+    <div class="al-card mb-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md-4">
+          <label class="form-label mb-1" for="fSearch">Search</label>
+          <input type="text" id="fSearch" class="form-control form-control-sm" placeholder="Search title, code, artefact, mentor…">
+        </div>
+        <div class="col-6 col-md-3 d-none" id="deptFilterCol">
+          <label class="form-label mb-1" for="fDepartment">Department</label>
+          <select id="fDepartment" class="form-select form-select-sm">
+            <option value="">All Departments</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2 d-none" id="mentorFilterCol">
+          <label class="form-label mb-1" for="fMentor">Faculty Mentor</label>
+          <select id="fMentor" class="form-select form-select-sm">
+            <option value="">All Mentors</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2" id="themeFilterCol">
+          <label class="form-label mb-1" for="fTheme">Theme</label>
+          <select id="fTheme" class="form-select form-select-sm">
+            <option value="">All Themes</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2" id="statusFilterCol">
+          <label class="form-label mb-1" for="fStatus">Status</label>
+          <select id="fStatus" class="form-select form-select-sm">
+            <option value="">All Statuses</option>
+            <option value="GREEN">Green</option>
+            <option value="YELLOW">Yellow</option>
+            <option value="RED">Red</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Status Bar -->
+    <div class="al-card mb-3 py-2 px-3">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2" style="font-size: 13px;">
+        <div class="d-flex align-items-center gap-2">
+          <span class="badge bg-primary-subtle text-primary-emphasis border" id="projectCountBadge">0 Projects</span>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-3">
+          <span class="d-flex align-items-center gap-1"><span class="al-rag-dot rag-green"></span> Green: <strong id="statGreen">0</strong></span>
+          <span class="d-flex align-items-center gap-1"><span class="al-rag-dot rag-yellow"></span> Yellow: <strong id="statYellow">0</strong></span>
+          <span class="d-flex align-items-center gap-1"><span class="al-rag-dot rag-red"></span> Red: <strong id="statRed">0</strong></span>
+          <span class="text-muted">Avg: <strong id="statAvg" class="text-dark">0%</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects Table -->
+    <div class="al-card">
+      <div class="table-responsive">
+        <table class="table al-table align-middle">
+          <thead>
+            <tr>
+              <th style="min-width: 250px;">Project & Artefact</th>
+              <th style="min-width: 150px;">Department & Theme</th>
+              <th style="min-width: 130px;" id="thMentor">Faculty Mentor</th>
+              <th style="min-width: 95px;">Status</th>
+              <th style="min-width: 120px;">Progress</th>
+              <th style="min-width: 110px;">Next Review</th>
+              <th class="text-end" style="min-width: 220px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="projectsTableBody">
+            <tr><td colspan="7" class="text-muted text-center py-4">Loading projects…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="../js/api.js"></script>
+<script src="../js/rag.js"></script>
+<script src="../js/dashboard.js"></script>
+</body>
+</html>

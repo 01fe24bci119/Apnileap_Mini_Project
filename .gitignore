@@ -1,42 +1,16 @@
 # Dependencies
 node_modules/
-*/node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Live secrets and environment configuration
+# Secrets and local configuration - never commit
 .env
 .env.*
 !.env.example
-server/.env
-server/.env.*
-!server/.env.example
 
-# Temporary database files & test databases
-*.db-wal
-*.db-shm
-*.db-journal
-server/data/test-*.db
-server/data/*.db-wal
-server/data/*.db-shm
+# Database dumps and backups (contain real people's data and password hashes)
+backend/db/backup_*.sql
+*.dump
+*.bak
 
-# Build and runtime outputs
-dist/
-web/dist/
-build/
-*.tsbuildinfo
-.vite/
-web/.vite/
-web/.vite-temp/
-
-# Logs
-logs/
+# Logs and local tooling
 *.log
-
-# Editor & OS files
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/
-
+.claude/
